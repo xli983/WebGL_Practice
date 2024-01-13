@@ -4,30 +4,45 @@ var vertexShaderSource = `#version 300 es
 
 // w is default 1
 in vec4 a_position;
-in vec4 a_color;
+//in vec4 a_color;
+
+in vec3 a_normal;
 
 uniform mat4 u_matrix;
 
-// varying color to the fragment shader
-out vec4 v_color;
+// varying to pass the normal to the fragment shader
+out vec3 v_normal;
+
+// // varying color to the fragment shader
+// out vec4 v_color;
 
 void main() {
   // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
-  // Pass to fragment shader
-  v_color = a_color;
+  // // Pass to fragment shader
+  // v_color = a_color;
+  // Pass the normal to the fragment shader
+  v_normal = a_normal;
 }
 `;
 
 var fragmentShaderSource = `#version 300 es
 
 precision highp float;
+//in vec4 v_color;
+// Passed in and varied from the vertex shader.
+in vec3 v_normal;
+ 
+uniform vec3 u_reverseLightDirection;
+uniform vec4 u_color;
 
-in vec4 v_color;
 out vec4 outColor;
 
 void main() {
-  outColor = v_color;
+  vec3 normal = normalize(v_normal);
+  float light = dot(normal, u_reverseLightDirection);
+  outColor = u_color;
+  outColor.rgb *= light;
 }
 `;
 
@@ -78,8 +93,12 @@ function main() {
 
   // look up location
   var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-  var colorAttributeLocation = gl.getAttribLocation(program, "a_color");
+  var normalLocation = gl.getAttribLocation(program, "a_normal");
+  // var colorAttributeLocation = gl.getAttribLocation(program, "a_color");
   var matrixLocation = gl.getUniformLocation(program, "u_matrix");
+  var colorLocation = gl.getUniformLocation(program, "u_color");
+  var reverseLightDirectionLocation =
+      gl.getUniformLocation(program, "u_reverseLightDirection");
 
   // Create a buffer 
   var positionBuffer = gl.createBuffer();
@@ -101,18 +120,27 @@ function main() {
   gl.vertexAttribPointer(
       positionAttributeLocation, size, type, normalize, stride, offset);
 
-  // create the color buffer, make it the current ARRAY_BUFFER
-  var colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  setColors(gl);
-  gl.enableVertexAttribArray(colorAttributeLocation);
-  var size = 3;          // 3 components per iteration
-  var type = gl.UNSIGNED_BYTE;   // the data is 8bit unsigned bytes
-  var normalize = true;  // convert from 0-255 to 0.0-1.0
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next color
-  var offset = 0;        // start at the beginning of the buffer
-  gl.vertexAttribPointer(
-      colorAttributeLocation, size, type, normalize, stride, offset);
+  // // create the color buffer, make it the current ARRAY_BUFFER
+  // var colorBuffer = gl.createBuffer();
+  // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  // setColors(gl);
+  // gl.enableVertexAttribArray(colorAttributeLocation);
+  // var size = 3;          // 3 components per iteration
+  // var type = gl.UNSIGNED_BYTE;   // the data is 8bit unsigned bytes
+  // var normalize = true;  // convert from 0-255 to 0.0-1.0
+  // var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next color
+  // var offset = 0;        // start at the beginning of the buffer
+  // gl.vertexAttribPointer(
+  //     colorAttributeLocation, size, type, normalize, stride, offset);
+
+  // Create a buffer for normals.
+  var buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.enableVertexAttribArray(normalLocation);
+  gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
+ 
+// Set normals.
+setNormals(gl);
 
   function radToDeg(r) {
     return r * 180 / Math.PI;
@@ -178,7 +206,7 @@ function main() {
   // Draw the scene.
   function drawScene() {
     resizeCanvasToDisplaySize(gl.canvas);
-    // Tell WebGL how to convert from clip space to pixels
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -196,6 +224,10 @@ function main() {
     matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
 
     gl.uniformMatrix4fv(matrixLocation, false, matrix);
+      // Set the color to use
+    gl.uniform4fv(colorLocation, [0.5, 0.5, 0.5, 1]); // green
+    // set the light direction.
+    gl.uniform3fv(reverseLightDirectionLocation, m4.normalize([0.5, 0.7, 1]));
 
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
@@ -259,7 +291,53 @@ function setGeometry(gl) {
       gl.STATIC_DRAW);
 }
 
-// Fill the current ARRAY_BUFFER buffer with colors for the 'F'.
+function setNormals(gl) {
+  var normals = new Float32Array([
+          0, 0, 1,
+          0, 0, 1,
+          0, 0, 1,
+          0, 0, 1,
+          0, 0, 1,
+          0, 0, 1,
+ 
+          0, 0, -1,
+          0, 0, -1,
+          0, 0, -1,
+          0, 0, -1,
+          0, 0, -1,
+          0, 0, -1,
+ 
+          1, 0, 0,
+          1, 0, 0,
+          1, 0, 0,
+          1, 0, 0,
+          1, 0, 0,
+          1, 0, 0,
+ 
+          0, -1, 0,
+          0, -1, 0,
+          0, -1, 0,
+          0, -1, 0,
+          0, -1, 0,
+          0, -1, 0,
+
+          0, 1, 0,
+          0, 1, 0,
+          0, 1, 0,
+          0, 1, 0,
+          0, 1, 0,
+          0, 1, 0,
+
+          -1, 0, 0,
+          -1, 0, 0,
+          -1, 0, 0,
+          -1, 0, 0,
+          -1, 0, 0,
+          -1, 0, 0,
+  ]);
+  gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+}
+
 function setColors(gl) {
   gl.bufferData(
       gl.ARRAY_BUFFER,
@@ -312,6 +390,17 @@ function setColors(gl) {
 
 
 var m4 = {
+  normalize: function normalize(v, dst) {
+    dst = dst || new Float32Array(3);
+    var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    // make sure we don't divide by 0.
+    if (length > 0.00001) {
+      dst[0] = v[0] / length;
+      dst[1] = v[1] / length;
+      dst[2] = v[2] / length;
+    }
+    return dst;
+  },
 
   projection: function(width, height, depth) {
     // Note: This matrix flips the Y axis so 0 is at the top.
