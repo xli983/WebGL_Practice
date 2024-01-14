@@ -1,38 +1,23 @@
 "use strict";
 
 var vertexShaderSource = `#version 300 es
-
-// w is default 1
 in vec4 a_position;
-//in vec4 a_color;
-
 in vec3 a_normal;
 
-uniform mat4 u_matrix;
+uniform mat4 u_worldViewProjection;
+uniform mat4 u_world;
 
-// varying to pass the normal to the fragment shader
 out vec3 v_normal;
 
-// // varying color to the fragment shader
-// out vec4 v_color;
-
 void main() {
-  // Multiply the position by the matrix.
-  gl_Position = u_matrix * a_position;
-  // // Pass to fragment shader
-  // v_color = a_color;
-  // Pass the normal to the fragment shader
-  v_normal = a_normal;
+  gl_Position = u_worldViewProjection * a_position;
+  v_normal = mat3(u_world) * a_normal;
 }
 `;
 
 var fragmentShaderSource = `#version 300 es
-
 precision highp float;
-//in vec4 v_color;
-// Passed in and varied from the vertex shader.
 in vec3 v_normal;
- 
 uniform vec3 u_reverseLightDirection;
 uniform vec4 u_color;
 
@@ -95,7 +80,10 @@ function main() {
   var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
   var normalLocation = gl.getAttribLocation(program, "a_normal");
   // var colorAttributeLocation = gl.getAttribLocation(program, "a_color");
-  var matrixLocation = gl.getUniformLocation(program, "u_matrix");
+  //The new matrix
+  var worldViewProjectionLocation =
+    gl.getUniformLocation(program, "u_worldViewProjection");
+  var worldLocation = gl.getUniformLocation(program, "u_world");
   var colorLocation = gl.getUniformLocation(program, "u_color");
   var reverseLightDirectionLocation =
       gl.getUniformLocation(program, "u_reverseLightDirection");
@@ -153,29 +141,13 @@ setNormals(gl);
   // Variables
   var translation = [45, 45, 0];
   var rotation = [degToRad(40), degToRad(25), degToRad(325)];
-  var scale = [1, 1, 1];
 
   drawScene();
 
   // Setup a ui.
-  webglLessonsUI.setupSlider("#x",      {value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
-  webglLessonsUI.setupSlider("#y",      {value: translation[1], slide: updatePosition(1), max: gl.canvas.height});
-  webglLessonsUI.setupSlider("#z",      {value: translation[2], slide: updatePosition(2), max: gl.canvas.height});
   webglLessonsUI.setupSlider("#angleX", {value: radToDeg(rotation[0]), slide: updateRotation(0), max: 360});
   webglLessonsUI.setupSlider("#angleY", {value: radToDeg(rotation[1]), slide: updateRotation(1), max: 360});
   webglLessonsUI.setupSlider("#angleZ", {value: radToDeg(rotation[2]), slide: updateRotation(2), max: 360});
-  webglLessonsUI.setupSlider("#scaleX", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2});
-  webglLessonsUI.setupSlider("#scaleY", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2});
-  webglLessonsUI.setupSlider("#scaleZ", {value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2});
-
- 
-  function updatePosition(index) {
-    return function(event, ui) {
-      translation[index] = ui.value;
-      drawScene();
-    };
-  }
-
   function updateRotation(index) {
     return function(event, ui) {
       var angleInDegrees = ui.value;
@@ -185,12 +157,6 @@ setNormals(gl);
     };
   }
 
-  function updateScale(index) {
-    return function(event, ui) {
-      scale[index] = ui.value;
-      drawScene();
-    };
-  }
   function resizeCanvasToDisplaySize(canvas, multiplier) {
     multiplier = multiplier || 1;
     const width  = canvas.clientWidth  * multiplier | 0;
@@ -221,9 +187,16 @@ setNormals(gl);
     matrix = m4.xRotate(matrix, rotation[0]);
     matrix = m4.yRotate(matrix, rotation[1]);
     matrix = m4.zRotate(matrix, rotation[2]);
-    matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
 
-    gl.uniformMatrix4fv(matrixLocation, false, matrix);
+    var worldMatrix = matrix;
+    var worldViewProjectionMatrix = worldMatrix;
+
+    gl.uniformMatrix4fv(
+      worldViewProjectionLocation, false,
+      worldViewProjectionMatrix);
+    gl.uniformMatrix4fv(worldLocation, false, worldMatrix);
+
+
       // Set the color to use
     gl.uniform4fv(colorLocation, [0.5, 0.5, 0.5, 1]); // green
     // set the light direction.
