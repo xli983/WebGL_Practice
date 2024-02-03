@@ -70,7 +70,6 @@ function main() {
     return undefined;
   }
 
-  // create GLSL shaders, upload the GLSL source, compile the shaders
   var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
   var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
   // Link the two shaders into a program
