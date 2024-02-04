@@ -1,24 +1,19 @@
-// WebGL2 - Scene Graph - Solar System
-// from https://webgl2fundamentals.org/webgl/webgl-scene-graph-solar-system.html
-
-
 "use strict";
 
 var vs = `#version 300 es
 
 in vec4 a_position;
-in vec4 a_color;
+in vec2 a_texcoord;
 
 uniform mat4 u_matrix;
 
-out vec4 v_color;
+out vec2 v_texcoord;
 
 void main() {
   // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
 
-  // Pass the color to the fragment shader.
-  v_color = a_color;
+  v_texcoord = a_texcoord;
 }
 `;
 
@@ -26,15 +21,15 @@ var fs = `#version 300 es
 precision highp float;
 
 // Passed in from the vertex shader.
-in vec4 v_color;
+in vec2 v_texcoord;
 
-uniform vec4 u_colorMult;
-uniform vec4 u_colorOffset;
+uniform sampler2D u_texture;
 
 out vec4 outColor;
 
 void main() {
-   outColor = v_color * u_colorMult + u_colorOffset;
+  vec4 texColor = texture(u_texture, v_texcoord);
+  outColor = texColor;
 }
 `;
 
@@ -109,8 +104,8 @@ function main() {
   }
 
 
-  var sphereBufferInfo0 = createCubeWithVertexColorsBufferInfo(gl, 50);
-  var sphereBufferInfo1 = createCubeWithVertexColorsBufferInfo(gl, 30);
+  var sphereBufferInfo0 = createCubeWithVertexColorsBufferInfo(gl, 60);
+  var sphereBufferInfo1 = createCubeWithVertexColorsBufferInfo(gl, 40);
 
   // setup GLSL program
   var vertexShader = createShader(gl, gl.VERTEX_SHADER, vs);
@@ -121,6 +116,8 @@ function main() {
   var sphereVAO0 = createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo0);
   var sphereVAO1 = createVAOFromBufferInfo(gl, programInfo, sphereBufferInfo1);
 
+  const tex0 = loadTexture(gl, 'miku.png');
+  const tex1 = loadTexture(gl, 'dog.png');
   function degToRad(d) {
     return d * Math.PI / 180;
   }
@@ -135,24 +132,24 @@ function main() {
   Mother.localMatrix = translation(0, 0, 0);  
   Mother.drawInfo = {
     uniforms: {
-      u_colorOffset: [0.6, 0.6, 0, 1], 
-      u_colorMult:   [0.4, 0.4, 0, 1],
+      u_texture: tex0,
     },
     programInfo: programInfo,
     bufferInfo: sphereBufferInfo0,
     vertexArray: sphereVAO0,
+    texture: tex0,
   };
 
   var childNode = new Node();
   childNode.localMatrix = translation(100, 0, 0);  
   childNode.drawInfo = {
     uniforms: {
-      u_colorOffset: [0.2, 0.5, 0.8, 1], 
-      u_colorMult:   [0.8, 0.5, 0.2, 1],
+      u_texture: tex1,
     },
     programInfo: programInfo,
     bufferInfo: sphereBufferInfo1,
     vertexArray: sphereVAO1,
+    texture: tex1,
   };
 
 
@@ -204,9 +201,10 @@ function main() {
 
     objects.forEach(function(object) {
         object.drawInfo.uniforms.u_matrix = multiply(viewProjectionMatrix, object.worldMatrix);
-    });
-
-
+        setUniforms(object.drawInfo.programInfo.uniformSetters, object.drawInfo.uniforms, {
+          u_texture: object.drawInfo.texture,
+        });
+      });
     drawObjectList(gl, objectsToDraw);
 
     requestAnimationFrame(drawScene);
