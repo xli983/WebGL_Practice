@@ -73,7 +73,7 @@ function createShader(gl, type, source) {
     return shader;
   }
 
-  console.log(gl.getShaderInfoLog(shader));  // eslint-disable-line
+  console.log(gl.getShaderInfoLog(shader));  
   gl.deleteShader(shader);
   return undefined;
 }
@@ -106,8 +106,6 @@ function main() {
 
   var sphereBufferInfo0 = createCubeWithVertexColorsBufferInfo(gl, 60);
   var sphereBufferInfo1 = createCubeWithVertexColorsBufferInfo(gl, 40);
-
-  // setup GLSL program
   var vertexShader = createShader(gl, gl.VERTEX_SHADER, vs);
   var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fs);
   var program = createProgram(gl, vertexShader, fragmentShader);
@@ -127,7 +125,6 @@ function main() {
   var objectsToDraw = [];
   var objects = [];
 
-  // Let's make all the nodes
   var Mother = new Node();
   Mother.localMatrix = translation(0, 0, 0);  
   Mother.drawInfo = {
@@ -137,7 +134,6 @@ function main() {
     programInfo: programInfo,
     bufferInfo: sphereBufferInfo0,
     vertexArray: sphereVAO0,
-    texture: tex0,
   };
 
   var childNode = new Node();
@@ -149,7 +145,6 @@ function main() {
     programInfo: programInfo,
     bufferInfo: sphereBufferInfo1,
     vertexArray: sphereVAO1,
-    texture: tex1,
   };
 
 
@@ -167,7 +162,6 @@ function main() {
 
   requestAnimationFrame(drawScene);
 
-  // Draw the scene.
   function drawScene(time) {
     time *= 0.001;
 
@@ -201,9 +195,6 @@ function main() {
 
     objects.forEach(function(object) {
         object.drawInfo.uniforms.u_matrix = multiply(viewProjectionMatrix, object.worldMatrix);
-        setUniforms(object.drawInfo.programInfo.uniformSetters, object.drawInfo.uniforms, {
-          u_texture: object.drawInfo.texture,
-        });
       });
     drawObjectList(gl, objectsToDraw);
 
