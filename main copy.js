@@ -188,10 +188,10 @@ function main() {
     var projectionMatrix =
         perspective(fieldOfViewRadians, aspect, 1, 2000);
 
-    var cameraPosition = [-200, -200, 0];
+    var cameraPosition = [-200, -50, 0];
     var target = [0, 0, 0];
-    var up = [0, 0, 1];
-    var cameraMatrix = lookAt(cameraPosition, target, up);
+    var up = [0, 1, 0];
+    var cameraMatrix = lookAt(cameraPosition, target, up, identity());
 
     var viewMatrix = inverse(cameraMatrix);
 
