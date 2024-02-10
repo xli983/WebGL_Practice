@@ -4,16 +4,20 @@ var vs = `#version 300 es
 
 in vec4 a_position;
 in vec2 a_texcoord;
+in vec3 a_normal;
 
 uniform mat4 u_matrix;
+uniform mat4 u_world;
 
 out vec2 v_texcoord;
+out vec3 v_normal;
 
 void main() {
   // Multiply the position by the matrix.
   gl_Position = u_matrix * a_position;
 
   v_texcoord = a_texcoord;
+  v_normal = mat3(u_world) * a_normal;
 }
 `;
 
@@ -22,14 +26,19 @@ precision highp float;
 
 // Passed in from the vertex shader.
 in vec2 v_texcoord;
+in vec3 v_normal;
 
+uniform vec3 u_reverseLightDirection;
 uniform sampler2D u_texture;
 
 out vec4 outColor;
 
 void main() {
   vec4 texColor = texture(u_texture, v_texcoord);
+  vec3 normal = normalize(v_normal);
+  float light = dot(normal, u_reverseLightDirection);
   outColor = texColor;
+  outColor.rgb *= light;
 }
 `;
 
@@ -193,8 +202,11 @@ function main() {
 
     Mother.updateWorldMatrix();
 
+
     objects.forEach(function(object) {
         object.drawInfo.uniforms.u_matrix = multiply(viewProjectionMatrix, object.worldMatrix);
+        object.drawInfo.uniforms.u_world = object.worldMatrix;
+        object.drawInfo.uniforms.u_reverseLightDirection = normalize([-3.0, -2.0, -3.0]);
       });
     drawObjectList(gl, objectsToDraw);
 
