@@ -14,6 +14,35 @@ function loadShader(gl, shaderSource, shaderType, opt_errorCallback) {
   
     return shader;
   }
+
+  
+  function createShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+      return shader;
+    }
+
+    console.log(gl.getShaderInfoLog(shader));  
+    gl.deleteShader(shader);
+    return undefined;
+  }
+  function createProgram(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+      return program;
+    }
+
+    console.log(gl.getProgramInfoLog(program)); 
+    gl.deleteProgram(program);
+    return undefined;
+  }
   
   function createProgram(
       gl, shaders, opt_attribs, opt_locations, opt_errorCallback) {
@@ -319,6 +348,7 @@ function loadShader(gl, shaderSource, shaderType, opt_errorCallback) {
   function createVAOFromBufferInfo(gl, programInfo, bufferInfo) {
     return createVAOAndSetAttributes(gl, programInfo.attribSetters || programInfo, bufferInfo.attribs, bufferInfo.indices);
   }
+  
   function createProgramInfo(
       gl, program) {
     const uniformSetters = createUniformSetters(gl, program);
@@ -643,6 +673,34 @@ function loadShader(gl, shaderSource, shaderType, opt_errorCallback) {
   
   function isPowerOf2(value) {
     return (value & (value - 1)) == 0;
+  }
+
+  function createShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+      return shader;
+    }
+  
+    console.log(gl.getShaderInfoLog(shader));  
+    gl.deleteShader(shader);
+    return undefined;
+  }
+  function createProgram(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+      return program;
+    }
+  
+    console.log(gl.getProgramInfoLog(program)); 
+    gl.deleteProgram(program);
+    return undefined;
   }
   
   
