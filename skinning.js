@@ -59,30 +59,30 @@ function main() {
     position: {
       numComponents: 3,
       data: [
-       0,  1,  -1,// 0
-       0, -1,  -1,// 1
-       0,  1,  1,// 2
-       0, -1,  1,// 3
-       2,  1,  -1,// 4
-       2, -1,  -1,// 5
-       2,  1,  1,// 6
-       2, -1,  1,// 7
-       4,  1,  -1,// 8
-       4, -1,  -1,// 9
-       4,  1,  1,// 10
-       4, -1,  1,// 11
-       6,  1,  -1,// 12
-       6, -1,  -1,// 13
-       6,  1,  1,// 14
-       6, -1,  1,// 15
-       8,  1,  -1,// 16
-       8, -1,  -1,// 17
-       8,  1,  1,// 18
-       8, -1,  1,// 19
-       10, 1,  -1,// 20
-       10, -1,  -1,// 21
-       10, 1,  1,// 22
-       10, -1,  1,// 23
+       0,  1,  0,// 0
+       0, -1,  0,// 1
+       0,  1,  2,// 2
+       0, -1,  2,// 3
+       2,  1,  0,// 4
+       2, -1,  0,// 5
+       2,  1,  2,// 6
+       2, -1,  2,// 7
+       4,  1,  0,// 8
+       4, -1,  0,// 9
+       4,  1,  2,// 10
+       4, -1,  2,// 11
+       6,  1,  0,// 12
+       6, -1,  0,// 13
+       6,  1,  2,// 14
+       6, -1,  2,// 15
+       8,  1,  0,// 16
+       8, -1,  0,// 17
+       8,  1,  2,// 18
+       8, -1,  2,// 19
+       10, 1,  0,// 20
+       10, -1,  0,// 21
+       10, 1,  2,// 22
+       10, -1,  2,// 23
       ],
     },
     boneNdx: {
@@ -234,6 +234,8 @@ function main() {
      zRotate(m, angle, bones[1]);
      translate(bones[1], 4, 0, 0, m);
      zRotate(m, angle, bones[2]);
+     translate(bones[2], 4, 0, 0, m);
+     zRotate(m, angle, bones[3]);
   }
 
   computeBoneMatrices(bindPose, 0);
@@ -245,15 +247,16 @@ function main() {
   function render(time) {
     resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    orthographic(-aspect * 10, aspect * 10, -10, 10, -1, 1, uniforms.projection);
+    gl.disable(gl.DEPTH_TEST);
+    // const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    // orthographic(-aspect * 10, aspect * 10, -10, 10, -1, 1, uniforms.projection);
+    uniforms.projection = orthographic(-20, 20, -10, 10, -100, 100);
 
     var t = time * 0.001;
     var angle = Math.sin(t) * 0.8;
-    //var angle = 0;
     computeBoneMatrices(bones, angle);
 
-    var viewmartix = yRotate(identity(), time * 0.001);
+    var viewmartix =  xRotate(identity(), 0.5);
     uniforms.view = viewmartix;
 
     bones.forEach(function(bone, ndx) {
